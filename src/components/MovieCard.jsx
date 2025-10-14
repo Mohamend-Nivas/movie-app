@@ -1,45 +1,44 @@
-import React from "react";
+// src/components/MovieCard.jsx
+import React, { useState, useEffect } from "react";
+import { imgUrl } from "../api/tmdb";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "../hooks/useWatchlist";
 
-export default function GenreFilter({ genres, current, setSearchParams }) {
-  const curSet = new Set(
-    (current || "").split(",").filter(Boolean).map(Number)
-  );
+export default function MovieCard({ movie }) {
+  const [inList, setInList] = useState(isInWatchlist(movie.id));
 
-  const toggle = (id) => {
-    const newSet = new Set(curSet);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
+  useEffect(() => {
+    setInList(isInWatchlist(movie.id));
+  }, [movie.id]);
 
-    const val = Array.from(newSet).join(",");
-
-    setSearchParams((prev) => {
-      const obj = Object.fromEntries(prev.entries());
-      obj.genres = val;
-      obj.page = "1"; 
-      return obj;
-    });
+  const toggleWatchlist = () => {
+    if (inList) {
+      removeFromWatchlist(movie.id);
+    } else {
+      addToWatchlist(movie);
+    }
+    setInList(isInWatchlist(movie.id));
   };
 
+  if (!movie) return null;
+
   return (
-    <div className="flex flex-wrap gap-2 justify-center md:justify-start p-2">
-      {genres.map((g) => (
-        <button
-          key={g.id}
-          onClick={() => toggle(g.id)}
-          className={`
-            px-4 py-2 rounded-lg text-sm md:text-base font-medium
-            transition-all duration-200 ease-in-out
-            focus:outline-none focus:ring-2 focus:ring-blue-500
-            ${
-              curSet.has(g.id)
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }
-          `}
-        >
-          {g.name}
-        </button>
-      ))}
+    <div className="bg-gray-800 rounded-lg overflow-hidden shadow relative">
+      <img
+        src={imgUrl(movie.poster_path, "w300")}
+        alt={movie.title}
+        className="w-full h-72 object-cover"
+      />
+      <button
+        onClick={toggleWatchlist}
+        className="absolute top-2 right-2 text-xl text-red-500"
+      >
+        {inList ? <FaHeart /> : <FaRegHeart />}
+      </button>
+      <div className="p-3">
+        <h3 className="text-white font-semibold truncate">{movie.title}</h3>
+        <p className="text-gray-400 text-sm">{movie.release_date}</p>
+      </div>
     </div>
   );
 }
